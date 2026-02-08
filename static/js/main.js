@@ -1,5 +1,37 @@
 // GNSS Data Visualization JavaScript
 
+// Dark Mode Management
+function initDarkMode() {
+    const themeToggleBtn = document.getElementById('theme-toggle');
+    const themeIcon = document.getElementById('theme-icon');
+    const themeText = document.getElementById('theme-text');
+    
+    // Check for saved theme preference or default to light mode
+    const currentTheme = localStorage.getItem('theme') || 'light';
+    
+    // Apply the saved theme
+    if (currentTheme === 'dark') {
+        document.body.classList.add('dark-mode');
+        themeIcon.textContent = '☀️';
+        themeText.textContent = 'Light Mode';
+    }
+    
+    // Theme toggle button event listener
+    themeToggleBtn.addEventListener('click', () => {
+        document.body.classList.toggle('dark-mode');
+        
+        if (document.body.classList.contains('dark-mode')) {
+            themeIcon.textContent = '☀️';
+            themeText.textContent = 'Light Mode';
+            localStorage.setItem('theme', 'dark');
+        } else {
+            themeIcon.textContent = '🌙';
+            themeText.textContent = 'Dark Mode';
+            localStorage.setItem('theme', 'light');
+        }
+    });
+}
+
 // Global variables
 let map;
 let markers = [];
@@ -7,6 +39,7 @@ let currentData = [];
 
 // Initialize the application
 document.addEventListener('DOMContentLoaded', function() {
+    initDarkMode();
     initializeMap();
     loadData();
     setupEventListeners();
