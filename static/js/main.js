@@ -4,12 +4,16 @@
 let map;
 let markers = [];
 let currentData = [];
+let satelliteMarkers = [];
+let cityMarker = null;
+let satelliteUpdateInterval = null;
 
 // Initialize the application
 document.addEventListener('DOMContentLoaded', function() {
     initializeMap();
     loadData();
     setupEventListeners();
+    startSatelliteTracking();
 });
 
 // Initialize Leaflet map
@@ -22,8 +26,8 @@ function initializeMap() {
             return;
         }
         
-        // Default center (San Francisco Bay Area based on sample data)
-        map = L.map('map').setView([37.387458, -121.972360], 13);
+        // Default center (Indianapolis, Indiana)
+        map = L.map('map').setView([39.7684, -86.1581], 13);
         
         // Add OpenStreetMap tiles
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -361,6 +365,14 @@ function setupEventListeners() {
     
     // File upload
     document.getElementById('upload-btn').addEventListener('click', handleFileUpload);
+    
+    // City search
+    document.getElementById('city-search-btn').addEventListener('click', handleCitySearch);
+    document.getElementById('city-search').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            handleCitySearch();
+        }
+    });
 }
 
 // Show specific table
@@ -436,4 +448,145 @@ function showStatus(message, type) {
     statusDiv.textContent = message;
     statusDiv.className = type;
     statusDiv.style.display = 'block';
+}
+
+// Handle city search using Nominatim (OpenStreetMap geocoding)
+async function handleCitySearch() {
+    const cityInput = document.getElementById('city-search');
+    const statusDiv = document.getElementById('city-search-status');
+    const cityName = cityInput.value.trim();
+    
+    if (!cityName) {
+        showCitySearchStatus('Please enter a city name', 'error');
+        return;
+    }
+    
+    if (!map || typeof L === 'undefined') {
+        showCitySearchStatus('Map not available', 'error');
+        return;
+    }
+    
+    try {
+        showCitySearchStatus('Searching for city...', 'success');
+        
+        // Use Nominatim API for geocoding
+        const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(cityName)}&limit=1`, {
+            headers: {
+                'User-Agent': 'GeoLocation-Analysis-App'
+            }
+        });
+        
+        const results = await response.json();
+        
+        if (results && results.length > 0) {
+            const result = results[0];
+            const lat = parseFloat(result.lat);
+            const lon = parseFloat(result.lon);
+            
+            // Remove previous city marker if exists
+            if (cityMarker) {
+                map.removeLayer(cityMarker);
+            }
+            
+            // Create a new marker for the city
+            cityMarker = L.marker([lat, lon], {
+                icon: L.icon({
+                    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
+                    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+                    iconSize: [25, 41],
+                    iconAnchor: [12, 41],
+                    popupAnchor: [1, -34],
+                    shadowSize: [41, 41]
+                })
+            }).addTo(map);
+            
+            cityMarker.bindPopup(`<strong>${result.display_name}</strong>`).openPopup();
+            
+            // Pan and zoom to the city
+            map.setView([lat, lon], 13);
+            
+            showCitySearchStatus(`Found: ${result.display_name}`, 'success');
+        } else {
+            showCitySearchStatus('City not found. Please try a different name.', 'error');
+        }
+    } catch (error) {
+        console.error('Error searching for city:', error);
+        showCitySearchStatus('Error searching for city. Please try again.', 'error');
+    }
+}
+
+// Show city search status message
+function showCitySearchStatus(message, type) {
+    const statusDiv = document.getElementById('city-search-status');
+    statusDiv.textContent = message;
+    statusDiv.className = type;
+    statusDiv.style.display = 'block';
+    
+    // Auto-hide success messages after 5 seconds
+    if (type === 'success') {
+        setTimeout(() => {
+            statusDiv.style.display = 'none';
+        }, 5000);
+    }
+}
+
+// Start satellite tracking
+function startSatelliteTracking() {
+    if (!map || typeof L === 'undefined') {
+        console.log('Map not available for satellite tracking');
+        return;
+    }
+    
+    // Initial load
+    loadSatellites();
+    
+    // Update every 10 seconds
+    satelliteUpdateInterval = setInterval(loadSatellites, 10000);
+}
+
+// Load and display satellite positions
+async function loadSatellites() {
+    try {
+        const response = await fetch('/api/satellites');
+        const data = await response.json();
+        
+        if (data.status === 'success' && data.satellites) {
+            displaySatellites(data.satellites);
+        }
+    } catch (error) {
+        console.error('Error loading satellites:', error);
+        // Silently fail - this is not critical functionality
+    }
+}
+
+// Display satellites on the map
+function displaySatellites(satellites) {
+    if (!map || typeof L === 'undefined') {
+        return;
+    }
+    
+    // Clear existing satellite markers
+    satelliteMarkers.forEach(marker => map.removeLayer(marker));
+    satelliteMarkers = [];
+    
+    // Add new satellite markers
+    satellites.forEach(sat => {
+        const marker = L.circleMarker([sat.lat, sat.lon], {
+            radius: 8,
+            fillColor: '#ff6b6b',
+            color: '#fff',
+            weight: 2,
+            opacity: 1,
+            fillOpacity: 0.9
+        }).addTo(map);
+        
+        marker.bindPopup(`
+            <strong>${sat.name}</strong><br>
+            Alt: ${sat.altitude.toFixed(0)} km<br>
+            Velocity: ${sat.velocity.toFixed(1)} km/s<br>
+            Visibility: ${sat.visibility || 'N/A'}
+        `);
+        
+        satelliteMarkers.push(marker);
+    });
 }

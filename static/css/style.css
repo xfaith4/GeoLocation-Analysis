@@ -221,6 +221,49 @@ section h3 {
     margin-bottom: 40px;
 }
 
+.city-search-container {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+    align-items: flex-start;
+}
+
+#city-search {
+    flex: 1;
+    padding: 10px 15px;
+    border: 2px solid #667eea;
+    border-radius: 5px;
+    font-size: 1em;
+    transition: border-color 0.3s ease;
+}
+
+#city-search:focus {
+    outline: none;
+    border-color: #764ba2;
+}
+
+#city-search-status {
+    width: 100%;
+    margin-top: 10px;
+    padding: 10px;
+    border-radius: 5px;
+    display: none;
+}
+
+#city-search-status.success {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+    display: block;
+}
+
+#city-search-status.error {
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+    display: block;
+}
+
 #map {
     height: 500px;
     border-radius: 10px;
@@ -272,6 +315,11 @@ section h3 {
 
 .marker-dot.no-fix {
     background: #dc3545;
+}
+
+.marker-dot.satellite {
+    background: #ff6b6b;
+    box-shadow: 0 0 8px rgba(255, 107, 107, 0.6);
 }
 
 /* Data Tables */

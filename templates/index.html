@@ -94,6 +94,11 @@
         <!-- Map Visualization -->
         <section class="map-section">
             <h2>Position Visualization</h2>
+            <div class="city-search-container">
+                <input type="text" id="city-search" placeholder="Search for a city (e.g., Indianapolis, New York, London)" />
+                <button id="city-search-btn" class="btn btn-primary">Search</button>
+                <div id="city-search-status"></div>
+            </div>
             <div id="map"></div>
             <div class="map-info">
                 <p><strong>Map Legend:</strong></p>
@@ -102,6 +107,7 @@
                     <li><span class="marker-dot rtk-float"></span> RTK Float (Good)</li>
                     <li><span class="marker-dot gps-fix"></span> GPS Fix (Standard)</li>
                     <li><span class="marker-dot no-fix"></span> No Fix (Poor)</li>
+                    <li><span class="marker-dot satellite"></span> Live Satellites</li>
                 </ul>
             </div>
         </section>
