@@ -1,5 +1,37 @@
 // GNSS Data Visualization JavaScript
 
+// Dark Mode Management
+function initDarkMode() {
+    const themeToggleBtn = document.getElementById('theme-toggle');
+    const themeIcon = document.getElementById('theme-icon');
+    const themeText = document.getElementById('theme-text');
+    
+    // Check for saved theme preference or default to light mode
+    const currentTheme = localStorage.getItem('theme') || 'light';
+    
+    // Apply the saved theme
+    if (currentTheme === 'dark') {
+        document.body.classList.add('dark-mode');
+        themeIcon.textContent = '☀️';
+        themeText.textContent = 'Light Mode';
+    }
+    
+    // Theme toggle button event listener
+    themeToggleBtn.addEventListener('click', () => {
+        document.body.classList.toggle('dark-mode');
+        
+        if (document.body.classList.contains('dark-mode')) {
+            themeIcon.textContent = '☀️';
+            themeText.textContent = 'Light Mode';
+            localStorage.setItem('theme', 'dark');
+        } else {
+            themeIcon.textContent = '🌙';
+            themeText.textContent = 'Dark Mode';
+            localStorage.setItem('theme', 'light');
+        }
+    });
+}
+
 // Global variables
 let map;
 let markers = [];
@@ -7,6 +39,7 @@ let currentData = [];
 
 // Initialize the application
 document.addEventListener('DOMContentLoaded', function() {
+    initDarkMode();
     initializeMap();
     loadData();
     setupEventListeners();
@@ -361,6 +394,10 @@ function setupEventListeners() {
     
     // File upload
     document.getElementById('upload-btn').addEventListener('click', handleFileUpload);
+    
+    // Correction controls
+    document.getElementById('calculate-corrections-btn').addEventListener('click', calculateCorrections);
+    document.getElementById('apply-corrections-btn').addEventListener('click', applyCorrections);
 }
 
 // Show specific table
@@ -436,4 +473,130 @@ function showStatus(message, type) {
     statusDiv.textContent = message;
     statusDiv.className = type;
     statusDiv.style.display = 'block';
+}
+
+// Correction Functions
+async function calculateCorrections() {
+    const method = document.getElementById('correction-method').value;
+    const weightByQuality = document.getElementById('weight-by-quality').checked;
+    
+    try {
+        const response = await fetch('/api/corrections', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                method: method,
+                weight_by_quality: weightByQuality
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.status === 'success') {
+            displayCorrectionResults(result.corrections);
+            document.getElementById('apply-corrections-btn').disabled = false;
+        } else {
+            alert('Error calculating corrections: ' + result.message);
+        }
+    } catch (error) {
+        alert('Error calculating corrections: ' + error.message);
+    }
+}
+
+async function applyCorrections() {
+    const method = document.getElementById('correction-method').value;
+    const weightByQuality = document.getElementById('weight-by-quality').checked;
+    
+    try {
+        const response = await fetch('/api/apply_corrections', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                method: method,
+                weight_by_quality: weightByQuality
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.status === 'success') {
+            currentData = result.data;
+            updateTables(currentData);
+            updateStatistics(result.stats);
+            
+            // Update map with corrected positions
+            const positions = result.data
+                .filter(d => d.sentence_type === 'GGA' && d.latitude_corrected && d.longitude_corrected)
+                .map(d => ({
+                    lat: d.latitude_corrected,
+                    lon: d.longitude_corrected,
+                    alt: d.altitude_corrected || 0,
+                    fix_quality: d.fix_quality || 'Unknown',
+                    num_satellites: d.num_satellites || 0,
+                    timestamp: d.timestamp || ''
+                }));
+            plotPositions(positions);
+            
+            alert('Corrections applied successfully! Data tables and map updated.');
+        } else {
+            alert('Error applying corrections: ' + result.message);
+        }
+    } catch (error) {
+        alert('Error applying corrections: ' + error.message);
+    }
+}
+
+function displayCorrectionResults(corrections) {
+    const resultsDiv = document.getElementById('correction-results');
+    resultsDiv.style.display = 'block';
+    
+    if (corrections.error) {
+        resultsDiv.innerHTML = `<div class="error-message">${corrections.error}</div>`;
+        return;
+    }
+    
+    // Display corrected position
+    const correctedPos = corrections.corrected_position;
+    document.getElementById('corrected-lat').textContent = `Lat: ${correctedPos.latitude.toFixed(6)}°`;
+    document.getElementById('corrected-lon').textContent = `Lon: ${correctedPos.longitude.toFixed(6)}°`;
+    const altitude = correctedPos.altitude || 0;
+    document.getElementById('corrected-alt').textContent = `Alt: ${altitude.toFixed(1)} m`;
+    
+    // Display correction statistics
+    const corrStats = corrections.corrections;
+    document.getElementById('mean-correction').textContent = 
+        formatDistance(corrStats.mean_distance_correction_m);
+    document.getElementById('max-correction').textContent = 
+        formatDistance(corrStats.max_distance_correction_m);
+    
+    // Display accuracy improvement
+    const accuracy = corrections.accuracy_improvement;
+    document.getElementById('spread-before').textContent = 
+        formatDistance(accuracy.spread_before_m);
+    
+    // Update explanation based on method
+    const explanations = {
+        'mean': 'Simple Average: Calculates the arithmetic mean of all position readings. Best for datasets with consistent quality and no outliers.',
+        'median': 'Median Filter: Uses the middle value of sorted positions, which is resistant to outliers and extreme measurements.',
+        'weighted_average': 'Weighted Average: Prioritizes high-quality fixes (RTK Fixed > RTK Float > DGPS > GPS) and considers satellite count and HDOP values. Provides the most accurate correction for mixed-quality datasets.'
+    };
+    
+    document.getElementById('correction-method-explanation').textContent = 
+        explanations[corrections.method] || 'Custom correction method applied.';
+}
+
+function formatDistance(meters) {
+    if (meters < 0.01) {
+        return `${(meters * 1000).toFixed(1)} mm`;
+    } else if (meters < 1) {
+        return `${(meters * 100).toFixed(1)} cm`;
+    } else if (meters < 1000) {
+        return `${meters.toFixed(2)} m`;
+    } else {
+        return `${(meters / 1000).toFixed(3)} km`;
+    }
 }
