@@ -19,7 +19,7 @@
     <main class="container">
         <!-- Statistics Dashboard -->
         <section class="stats-dashboard">
-            <h2>Summary Statistics</h2>
+            <h2>📊 Summary Statistics</h2>
             <div class="stats-grid">
                 <div class="stat-card">
                     <div class="stat-icon">📊</div>
@@ -30,16 +30,63 @@
                     <div class="stat-icon">🛰️</div>
                     <div class="stat-label">Avg Satellites</div>
                     <div class="stat-value" id="avg-satellites">-</div>
+                    <div class="stat-detail" id="satellite-range">-</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-icon">📍</div>
-                    <div class="stat-label">Fix Quality</div>
+                    <div class="stat-label">Primary Fix Type</div>
                     <div class="stat-value" id="fix-quality">-</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-icon">📏</div>
                     <div class="stat-label">Avg HDOP</div>
                     <div class="stat-value" id="avg-hdop">-</div>
+                    <div class="stat-detail" id="hdop-range">-</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">⛰️</div>
+                    <div class="stat-label">Altitude Range</div>
+                    <div class="stat-value" id="altitude-range">-</div>
+                    <div class="stat-detail" id="altitude-avg">-</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">📡</div>
+                    <div class="stat-label">Signal Quality</div>
+                    <div class="stat-value" id="signal-quality">-</div>
+                    <div class="stat-detail">High-Precision Fixes</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">📐</div>
+                    <div class="stat-label">Position Spread</div>
+                    <div class="stat-value" id="position-spread">-</div>
+                    <div class="stat-detail">Coverage Area</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">🎯</div>
+                    <div class="stat-label">Data Points</div>
+                    <div class="stat-value" id="data-points">-</div>
+                    <div class="stat-detail" id="fix-breakdown">-</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Fix Type Distribution -->
+        <section class="fix-distribution-section">
+            <h2>🎯 Fix Type Distribution</h2>
+            <div class="fix-distribution-container">
+                <div class="fix-bars" id="fix-bars">
+                    <p class="loading">Loading fix type data...</p>
+                </div>
+                <div class="fix-legend" id="fix-legend">
+                    <p><strong>Understanding Fix Types:</strong></p>
+                    <ul>
+                        <li><strong>RTK Fixed:</strong> Centimeter-level accuracy (~1-2 cm)</li>
+                        <li><strong>RTK Float:</strong> Decimeter-level accuracy (~10-50 cm)</li>
+                        <li><strong>DGPS Fix:</strong> Meter-level accuracy (~1-5 m)</li>
+                        <li><strong>GPS Fix:</strong> Standard accuracy (~3-10 m)</li>
+                        <li><strong>No Fix:</strong> Position unavailable</li>
+                    </ul>
+                    <p style="font-size: 0.85em; color: #666; margin-top: 10px;"><em>Note: Actual accuracy depends on environmental conditions, receiver quality, and satellite geometry.</em></p>
                 </div>
             </div>
         </section>

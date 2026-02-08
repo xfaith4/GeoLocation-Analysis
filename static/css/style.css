@@ -73,7 +73,7 @@ section h3 {
 
 .stats-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap: 20px;
     margin-top: 20px;
 }
@@ -107,6 +107,113 @@ section h3 {
 .stat-value {
     font-size: 2em;
     font-weight: bold;
+}
+
+.stat-detail {
+    font-size: 0.85em;
+    opacity: 0.85;
+    margin-top: 5px;
+}
+
+/* Fix Type Distribution */
+.fix-distribution-section {
+    margin-bottom: 40px;
+    background: #f8f9fa;
+    padding: 25px;
+    border-radius: 10px;
+}
+
+.fix-distribution-container {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 30px;
+    margin-top: 20px;
+}
+
+.fix-bars {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.fix-bar-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.fix-bar-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.95em;
+}
+
+.fix-type-name {
+    font-weight: 600;
+    color: #333;
+}
+
+.fix-count {
+    color: #666;
+    font-size: 0.9em;
+}
+
+.fix-bar-track {
+    height: 28px;
+    background: #e9ecef;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.fix-bar-fill {
+    height: 100%;
+    transition: width 0.5s ease;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 10px;
+    color: white;
+    font-weight: 600;
+    font-size: 0.85em;
+}
+
+.fix-legend {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    border-left: 4px solid #667eea;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+.fix-legend p {
+    color: #667eea;
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+
+.fix-legend ul {
+    list-style: none;
+    padding: 0;
+}
+
+.fix-legend li {
+    padding: 8px 0;
+    border-bottom: 1px solid #f0f0f0;
+    font-size: 0.9em;
+    line-height: 1.5;
+}
+
+.fix-legend li:last-child {
+    border-bottom: none;
+}
+
+.fix-legend li strong {
+    color: #333;
+    display: block;
+    margin-bottom: 2px;
 }
 
 /* Map Section */
@@ -335,6 +442,14 @@ footer p {
 
     #file-input, #upload-btn {
         width: 100%;
+    }
+    
+    .fix-distribution-container {
+        grid-template-columns: 1fr;
+    }
+    
+    .fix-legend {
+        order: -1;
     }
 }
 

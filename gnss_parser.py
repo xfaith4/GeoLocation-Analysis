@@ -134,11 +134,13 @@ class GNSSParser:
         
         gga_data = [d for d in data if d.get('sentence_type') == 'GGA']
         gsa_data = [d for d in data if d.get('sentence_type') == 'GSA']
+        rmc_data = [d for d in data if d.get('sentence_type') == 'RMC']
         
         stats = {
             'total_sentences': len(data),
             'gga_count': len(gga_data),
             'gsa_count': len(gsa_data),
+            'rmc_count': len(rmc_data),
         }
         
         if gga_data:
@@ -151,12 +153,28 @@ class GNSSParser:
             if lats and lons:
                 stats['avg_latitude'] = sum(lats) / len(lats)
                 stats['avg_longitude'] = sum(lons) / len(lons)
+                stats['min_latitude'] = min(lats)
+                stats['max_latitude'] = max(lats)
+                stats['min_longitude'] = min(lons)
+                stats['max_longitude'] = max(lons)
+                
+                # Calculate position spread (simple distance approximation)
+                # Note: Uses simplified Euclidean distance assuming flat Earth.
+                # For higher accuracy over longer distances, consider Haversine formula.
+                lat_range = max(lats) - min(lats)
+                lon_range = max(lons) - min(lons)
+                stats['position_spread_meters'] = ((lat_range ** 2 + lon_range ** 2) ** 0.5) * 111000  # Rough conversion to meters
             
             if alts:
                 stats['avg_altitude'] = sum(alts) / len(alts)
+                stats['min_altitude'] = min(alts)
+                stats['max_altitude'] = max(alts)
+                stats['altitude_range'] = max(alts) - min(alts)
             
             if sats:
                 stats['avg_satellites'] = sum(sats) / len(sats)
+                stats['min_satellites'] = min(sats)
+                stats['max_satellites'] = max(sats)
             
             # Count fix types
             fix_types = {}
@@ -164,10 +182,33 @@ class GNSSParser:
                 fix_type = d.get('fix_quality', 'Unknown')
                 fix_types[fix_type] = fix_types.get(fix_type, 0) + 1
             stats['fix_types'] = fix_types
+            
+            # Calculate fix type percentages
+            if fix_types:
+                fix_percentages = {}
+                for fix_type, count in fix_types.items():
+                    fix_percentages[fix_type] = round((count / len(gga_data)) * 100, 1)
+                stats['fix_percentages'] = fix_percentages
         
         if gsa_data:
             hdops = [d['hdop'] for d in gsa_data if d.get('hdop') and d['hdop'] > 0]
+            pdops = [d['pdop'] for d in gsa_data if d.get('pdop') and d['pdop'] > 0]
+            vdops = [d['vdop'] for d in gsa_data if d.get('vdop') and d['vdop'] > 0]
+            
             if hdops:
                 stats['avg_hdop'] = sum(hdops) / len(hdops)
+                stats['min_hdop'] = min(hdops)
+                stats['max_hdop'] = max(hdops)
+            
+            if pdops:
+                stats['avg_pdop'] = sum(pdops) / len(pdops)
+            
+            if vdops:
+                stats['avg_vdop'] = sum(vdops) / len(vdops)
+        
+        # Calculate signal quality assessment
+        if gga_data:
+            good_fixes = sum(1 for d in gga_data if d.get('fix_quality') in ['RTK Fixed', 'RTK Float', 'DGPS Fix'])
+            stats['signal_quality_percent'] = round((good_fixes / len(gga_data)) * 100, 1) if gga_data else 0
         
         return stats
