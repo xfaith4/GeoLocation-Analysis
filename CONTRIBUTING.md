@@ -20,6 +20,7 @@ Thank you for your interest in contributing to the GeoLocation Analysis project!
 ## Testing
 
 Before submitting a PR:
+
 1. Test your changes locally
 2. Ensure the web application runs without errors
 3. Test with various NMEA file formats if changing the parser
