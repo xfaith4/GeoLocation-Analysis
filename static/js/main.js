@@ -36,6 +36,9 @@ function initDarkMode() {
 let map;
 let markers = [];
 let currentData = [];
+let satelliteMarkers = [];
+let cityMarker = null;
+let satelliteUpdateInterval = null;
 
 // Initialize the application
 document.addEventListener('DOMContentLoaded', function() {
@@ -43,6 +46,7 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeMap();
     loadData();
     setupEventListeners();
+    startSatelliteTracking();
 });
 
 // Initialize Leaflet map
@@ -55,8 +59,8 @@ function initializeMap() {
             return;
         }
         
-        // Default center (San Francisco Bay Area based on sample data)
-        map = L.map('map').setView([37.387458, -121.972360], 13);
+        // Default center (Indianapolis, Indiana)
+        map = L.map('map').setView([39.7684, -86.1581], 13);
         
         // Add OpenStreetMap tiles
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {

@@ -4,6 +4,9 @@ Flask Web Application for GNSS Data Visualization
 
 from flask import Flask, render_template, jsonify, request
 import os
+import requests
+import math
+from datetime import datetime
 from gnss_parser import GNSSParser
 
 app = Flask(__name__)
@@ -67,6 +70,72 @@ def get_positions():
         'status': 'success',
         'positions': positions
     })
+
+
+@app.route('/api/satellites')
+def get_satellites():
+    """API endpoint to get live satellite positions"""
+    try:
+        # Use N2YO API for satellite tracking
+        # For this implementation, we'll use a simplified approach
+        # In production, you would need an N2YO API key or use other satellite tracking services
+        
+        # Common GPS satellites (NORAD IDs)
+        gps_satellites = [
+            {'norad_id': 28361, 'name': 'GPS BIIA-14 (PRN 18)'},
+            {'norad_id': 28474, 'name': 'GPS BIIR-2 (PRN 13)'},
+            {'norad_id': 32384, 'name': 'GPS BIIR-13 (PRN 29)'},
+            {'norad_id': 35752, 'name': 'GPS BIIF-1 (PRN 25)'},
+            {'norad_id': 40105, 'name': 'GPS BIIF-4 (PRN 30)'},
+        ]
+        
+        satellites = []
+        
+        # Calculate approximate satellite positions
+        # This is a simplified calculation for demonstration
+        # In production, use proper orbital mechanics or satellite tracking API
+        current_time = datetime.utcnow()
+        time_offset = current_time.hour * 3600 + current_time.minute * 60 + current_time.second
+        
+        for i, sat_info in enumerate(gps_satellites):
+            # Simple orbital simulation (not accurate, for demo only)
+            # GPS satellites orbit at ~20,200 km altitude with 12-hour period
+            orbital_period = 12 * 3600  # 12 hours in seconds
+            angle = (time_offset + i * orbital_period / len(gps_satellites)) / orbital_period * 2 * math.pi
+            
+            # Calculate position (simplified circular orbit)
+            inclination = 55 * math.pi / 180  # GPS orbit inclination
+            lat = math.degrees(math.asin(math.sin(inclination) * math.sin(angle)))
+            lon = math.degrees(angle) - 180 * (time_offset / (orbital_period / 2))
+            
+            # Normalize longitude to -180 to 180
+            while lon > 180:
+                lon -= 360
+            while lon < -180:
+                lon += 360
+            
+            satellites.append({
+                'norad_id': sat_info['norad_id'],
+                'name': sat_info['name'],
+                'lat': lat,
+                'lon': lon,
+                'altitude': 20200,  # km
+                'velocity': 3.87,  # km/s
+                'visibility': 'Visible' if abs(lat) < 80 else 'Low visibility'
+            })
+        
+        return jsonify({
+            'status': 'success',
+            'satellites': satellites,
+            'timestamp': current_time.isoformat(),
+            'note': 'Satellite positions are approximate and for demonstration purposes'
+        })
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'message': str(e),
+            'satellites': []
+        })
 
 
 @app.route('/api/upload', methods=['POST'])

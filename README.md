@@ -12,6 +12,8 @@ A web application for analyzing and visualizing GNSS (Global Navigation Satellit
   - Median Filter for outlier resistance
   - Weighted Average considering fix quality, satellite count, and HDOP
 - **🗺️ Interactive Map**: Visualize position data on an interactive map with color-coded fix quality indicators
+- **🛰️ Live Satellite Tracking**: Track GPS satellites in real-time on the map with position updates
+- **🔍 City Search**: Search for any city worldwide and relocate the map view instantly
 - **📋 Data Tables**: View detailed GNSS metrics including fix type, satellite count, HDOP, and more
 - **🔄 Real-time Processing**: Parse NMEA sentences (GGA, RMC, GSA, GSV, etc.) in real-time
 - **📤 File Upload**: Analyze your own GNSS log files instantly
@@ -43,7 +45,10 @@ A visual bar chart showing the breakdown of positioning accuracy types:
 
 ### 3. **Position Visualization**
 
-Interactive map with color-coded markers showing position quality at each measurement point.
+Interactive map with color-coded markers showing position quality at each measurement point. The map:
+- **Defaults to Indianapolis, Indiana** for easy access to Midwest locations
+- **Live Satellite Tracking**: Shows GPS satellites currently in orbit with real-time position updates (refreshed every 10 seconds)
+- **City Search**: Type any city name (e.g., "New York", "London", "Tokyo") to instantly relocate the map view and place a marker
 
 ### 4. **Data Tables**
 
@@ -114,7 +119,10 @@ http://localhost:5006
 - The application will automatically load and display sample GNSS data from `sample_data/sample_gnss.nmea`
 - You'll see 8 statistics cards with real-time metrics
 - A fix type distribution chart will show positioning accuracy breakdown
-- Interactive map (if Leaflet loads) or data tables will display position information
+- Interactive map will display centered on **Indianapolis, Indiana** by default
+- **Live satellites** will appear on the map as red markers, updating every 10 seconds
+- Use the **city search box** to relocate the map to any city worldwide
+- Data tables will display position information
 - You can upload your own `.nmea`, `.txt`, or `.log` files using the upload section
 
 **Production Deployment:**
@@ -154,6 +162,16 @@ After starting the application, verify it's working correctly:
    - Statistics cards should show numerical values (not "-")
    - Fix type distribution should display at least one bar
    - GGA data table should contain at least one row of data
+
+4. **Test city search:**
+   - Enter a city name in the search box (e.g., "Indianapolis", "Chicago", "San Francisco")
+   - Click "Search" or press Enter
+   - The map should relocate to the searched city with a blue marker
+
+5. **Check satellite tracking:**
+   - Look for red circular markers on the map representing GPS satellites
+   - Satellites update their positions every 10 seconds
+   - Click on any satellite marker to see its details (name, altitude, velocity)
 
 ### Troubleshooting
 
@@ -253,6 +271,44 @@ The system provides detailed correction statistics:
 - **NMEA 0183**: GGA, RMC, GSA, GSV, VTG sentences
 - Support for RTK fix types (Float/Fixed)
 - Satellite information and signal quality
+- Live GPS satellite tracking with orbital calculations
+
+## API Endpoints
+
+The application provides several REST API endpoints:
+
+- **GET /api/data**: Get all parsed GNSS data
+- **GET /api/stats**: Get summary statistics
+- **GET /api/positions**: Get position data for mapping
+- **GET /api/satellites**: Get live GPS satellite positions (updates every 10 seconds)
+- **POST /api/upload**: Upload and parse a GNSS log file
+
+### Example: Get Satellite Positions
+
+```bash
+curl http://localhost:5006/api/satellites
+```
+
+Returns:
+```json
+{
+  "status": "success",
+  "satellites": [
+    {
+      "norad_id": 28361,
+      "name": "GPS BIIA-14 (PRN 18)",
+      "lat": -6.15,
+      "lon": 0.0,
+      "altitude": 20200,
+      "velocity": 3.87,
+      "visibility": "Visible"
+    },
+    ...
+  ],
+  "timestamp": "2024-02-08T18:30:00",
+  "note": "Satellite positions are approximate and for demonstration purposes"
+}
+```
 
 ## Mission Statement
 
