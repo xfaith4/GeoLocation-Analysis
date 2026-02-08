@@ -171,7 +171,9 @@ function updateFixDistribution(fixTypes, fixPercentages) {
     const sortedFixTypes = Object.entries(fixTypes).sort((a, b) => b[1] - a[1]);
     
     sortedFixTypes.forEach(([fixType, count]) => {
-        const percentage = fixPercentages ? fixPercentages[fixType] : ((count / Object.values(fixTypes).reduce((a, b) => a + b, 0)) * 100).toFixed(1);
+        const totalCount = Object.values(fixTypes).reduce((a, b) => a + b, 0);
+        const calculatedPercentage = ((count / totalCount) * 100).toFixed(1);
+        const percentage = fixPercentages ? fixPercentages[fixType] : calculatedPercentage;
         const color = fixColors[fixType] || '#6c757d';
         
         const barWrapper = document.createElement('div');

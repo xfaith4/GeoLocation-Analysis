@@ -159,6 +159,8 @@ class GNSSParser:
                 stats['max_longitude'] = max(lons)
                 
                 # Calculate position spread (simple distance approximation)
+                # Note: Uses simplified Euclidean distance assuming flat Earth.
+                # For higher accuracy over longer distances, consider Haversine formula.
                 lat_range = max(lats) - min(lats)
                 lon_range = max(lons) - min(lons)
                 stats['position_spread_meters'] = ((lat_range ** 2 + lon_range ** 2) ** 0.5) * 111000  # Rough conversion to meters
@@ -182,11 +184,11 @@ class GNSSParser:
             stats['fix_types'] = fix_types
             
             # Calculate fix type percentages
-            total_fixes = len(gga_data)
-            fix_percentages = {}
-            for fix_type, count in fix_types.items():
-                fix_percentages[fix_type] = round((count / total_fixes) * 100, 1)
-            stats['fix_percentages'] = fix_percentages
+            if fix_types:
+                fix_percentages = {}
+                for fix_type, count in fix_types.items():
+                    fix_percentages[fix_type] = round((count / len(gga_data)) * 100, 1)
+                stats['fix_percentages'] = fix_percentages
         
         if gsa_data:
             hdops = [d['hdop'] for d in gsa_data if d.get('hdop') and d['hdop'] > 0]
