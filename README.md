@@ -21,6 +21,7 @@ A web application for analyzing and visualizing GNSS (Global Navigation Satellit
 When you run this application, you'll see:
 
 ### 1. **Summary Statistics** (8 Cards)
+
 - **Total Sentences**: Count of all parsed NMEA messages
 - **Avg Satellites**: Average number of satellites in view with min/max range
 - **Primary Fix Type**: Most common positioning mode (RTK Fixed, RTK Float, GPS Fix, etc.)
@@ -31,29 +32,21 @@ When you run this application, you'll see:
 - **Data Points**: Number of position fixes and data types
 
 ### 2. **Fix Type Distribution**
+
 A visual bar chart showing the breakdown of positioning accuracy types:
+
 - **RTK Fixed** (Green): Centimeter-level accuracy (~1-2 cm) - Best
 - **RTK Float** (Cyan): Decimeter-level accuracy (~10-50 cm) - Good
 - **DGPS Fix** (Teal): Meter-level accuracy (~1-5 m) - Better than standard
 - **GPS Fix** (Yellow): Standard accuracy (~3-10 m) - Baseline
 - **No Fix** (Red): Position unavailable
 
-### 3. **Position Corrections & Analysis**
-Apply advanced correction algorithms to improve positioning accuracy:
-- **Simple Average**: Calculates arithmetic mean of all position readings
-- **Median Filter**: Uses middle value, resistant to outliers
-- **Weighted Average**: Prioritizes high-quality fixes (RTK) with satellite count and HDOP weighting
+### 3. **Position Visualization**
 
-The corrections panel shows:
-- Corrected position coordinates
-- Mean and maximum correction distances
-- Position spread before correction
-- Detailed explanation of the selected method
-
-### 4. **Position Visualization**
 Interactive map with color-coded markers showing position quality at each measurement point.
 
-### 5. **Data Tables**
+### 4. **Data Tables**
+
 Detailed tables for GGA, RMC, and GSA NMEA sentence types with all positioning parameters.
 
 ## Quick Start
@@ -86,6 +79,7 @@ pip install -r requirements.txt
 ```
 
 This will install:
+
 - Flask 3.0.0 - Web framework
 - Werkzeug 3.0.3 - WSGI utilities
 - pynmea2 1.19.0 - NMEA sentence parser
@@ -101,7 +95,8 @@ python app.py
 ```
 
 You should see output like:
-```
+
+``` url
 Starting GNSS Data Visualization Server...
 Navigate to http://localhost:5006
 ⚠️  Running in DEBUG mode - DO NOT use in production!
@@ -109,11 +104,13 @@ Navigate to http://localhost:5006
 ```
 
 Open your browser and navigate to:
-```
+
+``` url
 http://localhost:5006
 ```
 
 **Expected Outcome:**
+
 - The application will automatically load and display sample GNSS data from `sample_data/sample_gnss.nmea`
 - You'll see 8 statistics cards with real-time metrics
 - A fix type distribution chart will show positioning accuracy breakdown
@@ -143,9 +140,11 @@ The `-w 4` flag runs 4 worker processes for better performance.
 After starting the application, verify it's working correctly:
 
 1. **Check the server is running:**
+
    ```bash
    curl http://localhost:5006/api/stats
    ```
+
    You should see JSON with statistics like `total_sentences`, `avg_satellites`, `fix_types`, etc.
 
 2. **Access the web interface:**
@@ -159,6 +158,7 @@ After starting the application, verify it's working correctly:
 ### Troubleshooting
 
 **Issue:** Port 5006 already in use
+
 ```bash
 # Find process using port 5006
 lsof -i :5006  # On Linux/Mac
@@ -168,11 +168,13 @@ netstat -ano | findstr :5006  # On Windows
 ```
 
 **Issue:** Map not displaying
+
 - The map requires internet access to load Leaflet library
 - Data tables will still work without the map
 - Check browser console for network errors
 
 **Issue:** No data showing
+
 - Verify `sample_data/sample_gnss.nmea` exists
 - Check server console for parsing errors
 - Try uploading a valid NMEA file manually
