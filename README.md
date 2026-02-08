@@ -20,18 +20,21 @@ A web application for analyzing and visualizing GNSS (Global Navigation Satellit
 ### Installation
 
 1. Clone the repository:
+
 ```bash
 git clone https://github.com/xfaith4/GeoLocation-Analysis.git
 cd GeoLocation-Analysis
 ```
 
-2. Create a virtual environment (recommended):
+1. Create a virtual environment (recommended):
+
 ```bash
 python3 -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 ```
 
-3. Install dependencies:
+1. Install dependencies:
+
 ```bash
 pip install -r requirements.txt
 ```
@@ -39,11 +42,13 @@ pip install -r requirements.txt
 ### Running the Application
 
 1. Start the web server:
+
 ```bash
 python app.py
 ```
 
-2. Open your browser and navigate to:
+1. Open your browser and navigate to:
+
 ```
 http://localhost:5000
 ```
@@ -53,15 +58,17 @@ The application will display sample GNSS data. You can upload your own GNSS log 
 **Production Deployment:**
 
 For production deployment, disable debug mode by setting the environment variable:
+
 ```bash
 export FLASK_ENV=production
 python app.py
 ```
 
 Or use a production WSGI server like Gunicorn:
+
 ```bash
 pip install gunicorn
-gunicorn app:app -b 0.0.0.0:5000
+gunicorn app:app -b 0.0.0.0:5006
 ```
 
 ## Project Structure
