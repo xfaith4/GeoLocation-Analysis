@@ -68,7 +68,7 @@ Or use a production WSGI server like Gunicorn:
 
 ```bash
 pip install gunicorn
-gunicorn app:app -b 0.0.0.0:5006
+python app.py
 ```
 
 ## Project Structure
