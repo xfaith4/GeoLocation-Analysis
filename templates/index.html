@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GNSS Data Analysis - GeoLocation Visualization</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <!-- Leaflet CSS for mapping -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>🛰️ GNSS Data Analysis Platform</h1>
+            <p>High-Precision Positioning Visualization & Analysis</p>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- Statistics Dashboard -->
+        <section class="stats-dashboard">
+            <h2>Summary Statistics</h2>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">📊</div>
+                    <div class="stat-label">Total Sentences</div>
+                    <div class="stat-value" id="total-sentences">-</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">🛰️</div>
+                    <div class="stat-label">Avg Satellites</div>
+                    <div class="stat-value" id="avg-satellites">-</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">📍</div>
+                    <div class="stat-label">Fix Quality</div>
+                    <div class="stat-value" id="fix-quality">-</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">📏</div>
+                    <div class="stat-label">Avg HDOP</div>
+                    <div class="stat-value" id="avg-hdop">-</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Map Visualization -->
+        <section class="map-section">
+            <h2>Position Visualization</h2>
+            <div id="map"></div>
+            <div class="map-info">
+                <p><strong>Map Legend:</strong></p>
+                <ul>
+                    <li><span class="marker-dot rtk-fixed"></span> RTK Fixed (Best)</li>
+                    <li><span class="marker-dot rtk-float"></span> RTK Float (Good)</li>
+                    <li><span class="marker-dot gps-fix"></span> GPS Fix (Standard)</li>
+                    <li><span class="marker-dot no-fix"></span> No Fix (Poor)</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Data Tables -->
+        <section class="data-section">
+            <h2>GNSS Data Details</h2>
+            
+            <div class="table-controls">
+                <button id="toggle-gga" class="btn btn-primary active">GGA Data</button>
+                <button id="toggle-rmc" class="btn btn-secondary">RMC Data</button>
+                <button id="toggle-gsa" class="btn btn-secondary">GSA Data</button>
+            </div>
+
+            <!-- GGA Table -->
+            <div id="gga-table-container" class="table-container">
+                <h3>GGA - GPS Fix Data</h3>
+                <table id="gga-table">
+                    <thead>
+                        <tr>
+                            <th>Timestamp</th>
+                            <th>Latitude</th>
+                            <th>Longitude</th>
+                            <th>Altitude (m)</th>
+                            <th>Fix Quality</th>
+                            <th>Satellites</th>
+                            <th>HDOP</th>
+                        </tr>
+                    </thead>
+                    <tbody id="gga-tbody">
+                        <tr><td colspan="7" class="loading">Loading data...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- RMC Table -->
+            <div id="rmc-table-container" class="table-container" style="display: none;">
+                <h3>RMC - Recommended Minimum Data</h3>
+                <table id="rmc-table">
+                    <thead>
+                        <tr>
+                            <th>Timestamp</th>
+                            <th>Latitude</th>
+                            <th>Longitude</th>
+                            <th>Speed (knots)</th>
+                            <th>Course (°)</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="rmc-tbody">
+                        <tr><td colspan="6" class="loading">Loading data...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- GSA Table -->
+            <div id="gsa-table-container" class="table-container" style="display: none;">
+                <h3>GSA - DOP and Active Satellites</h3>
+                <table id="gsa-table">
+                    <thead>
+                        <tr>
+                            <th>Mode</th>
+                            <th>Fix Type</th>
+                            <th>PDOP</th>
+                            <th>HDOP</th>
+                            <th>VDOP</th>
+                            <th>Satellites Used</th>
+                        </tr>
+                    </thead>
+                    <tbody id="gsa-tbody">
+                        <tr><td colspan="6" class="loading">Loading data...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- File Upload Section -->
+        <section class="upload-section">
+            <h2>Upload GNSS Log File</h2>
+            <div class="upload-container">
+                <input type="file" id="file-input" accept=".nmea,.txt,.log" />
+                <button id="upload-btn" class="btn btn-primary">Upload & Analyze</button>
+                <div id="upload-status"></div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2024 GeoLocation Analysis | GNSS Data Visualization Platform</p>
+            <p>Supporting RTK, SBAS, PPP, and Multi-Constellation GNSS</p>
+        </div>
+    </footer>
+
+    <!-- Leaflet JS for mapping -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
