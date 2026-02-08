@@ -267,9 +267,11 @@ class GNSSParser:
             
             for d in gga_data:
                 quality_weight = quality_weights.get(d.get('fix_quality', 'Unknown'), 1.0)
-                sat_weight = d.get('num_satellites', 4) / 12.0  # Normalize to typical good satellite count
+                # Default to 4 satellites (minimum for 3D positioning) if not available
+                sat_weight = d.get('num_satellites', 4) / 12.0  # Normalize to typical good satellite count (12)
                 hdop = d.get('hdop', 2.0)
-                hdop_weight = 1.0 / max(hdop, 0.5)  # Lower HDOP is better
+                # Use 0.5 as minimum to prevent division by zero and cap max weight for excellent HDOP
+                hdop_weight = 1.0 / max(hdop, 0.5)  # Lower HDOP is better (inverted for weight)
                 
                 total_weight = quality_weight * sat_weight * hdop_weight if weight_by_quality else 1.0
                 weights.append(total_weight)
@@ -366,5 +368,3 @@ class GNSSParser:
             corrected_data.append(new_d)
         
         return corrected_data
-        
-        return stats

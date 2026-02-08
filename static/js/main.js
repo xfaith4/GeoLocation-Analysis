@@ -563,7 +563,8 @@ function displayCorrectionResults(corrections) {
     const correctedPos = corrections.corrected_position;
     document.getElementById('corrected-lat').textContent = `Lat: ${correctedPos.latitude.toFixed(6)}°`;
     document.getElementById('corrected-lon').textContent = `Lon: ${correctedPos.longitude.toFixed(6)}°`;
-    document.getElementById('corrected-alt').textContent = `Alt: ${correctedPos.altitude.toFixed(1)} m`;
+    const altitude = correctedPos.altitude || 0;
+    document.getElementById('corrected-alt').textContent = `Alt: ${altitude.toFixed(1)} m`;
     
     // Display correction statistics
     const corrStats = corrections.corrections;
