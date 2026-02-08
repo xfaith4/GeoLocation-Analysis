@@ -75,6 +75,12 @@ function updateStatistics(stats) {
     document.getElementById('avg-satellites').textContent = 
         stats.avg_satellites ? stats.avg_satellites.toFixed(1) : '-';
     
+    // Satellite range
+    if (stats.min_satellites !== undefined && stats.max_satellites !== undefined) {
+        document.getElementById('satellite-range').textContent = 
+            `Range: ${stats.min_satellites}-${stats.max_satellites}`;
+    }
+    
     // Display most common fix type
     if (stats.fix_types) {
         const fixTypes = Object.entries(stats.fix_types);
@@ -84,8 +90,105 @@ function updateStatistics(stats) {
         }
     }
     
+    // HDOP statistics
     document.getElementById('avg-hdop').textContent = 
         stats.avg_hdop ? stats.avg_hdop.toFixed(2) : '-';
+    
+    if (stats.min_hdop !== undefined && stats.max_hdop !== undefined) {
+        document.getElementById('hdop-range').textContent = 
+            `Range: ${stats.min_hdop.toFixed(2)}-${stats.max_hdop.toFixed(2)}`;
+    }
+    
+    // Altitude statistics
+    if (stats.altitude_range !== undefined) {
+        document.getElementById('altitude-range').textContent = 
+            `${stats.altitude_range.toFixed(1)} m`;
+        document.getElementById('altitude-avg').textContent = 
+            `Avg: ${stats.avg_altitude.toFixed(1)} m`;
+    } else {
+        document.getElementById('altitude-range').textContent = '-';
+        document.getElementById('altitude-avg').textContent = '-';
+    }
+    
+    // Signal quality
+    if (stats.signal_quality_percent !== undefined) {
+        document.getElementById('signal-quality').textContent = 
+            `${stats.signal_quality_percent}%`;
+    } else {
+        document.getElementById('signal-quality').textContent = '-';
+    }
+    
+    // Position spread
+    if (stats.position_spread_meters !== undefined) {
+        const spread = stats.position_spread_meters;
+        if (spread < 1) {
+            document.getElementById('position-spread').textContent = 
+                `${(spread * 100).toFixed(1)} cm`;
+        } else if (spread < 1000) {
+            document.getElementById('position-spread').textContent = 
+                `${spread.toFixed(1)} m`;
+        } else {
+            document.getElementById('position-spread').textContent = 
+                `${(spread / 1000).toFixed(2)} km`;
+        }
+    } else {
+        document.getElementById('position-spread').textContent = '-';
+    }
+    
+    // Data points
+    document.getElementById('data-points').textContent = stats.gga_count || 0;
+    document.getElementById('fix-breakdown').textContent = 
+        `${stats.gga_count || 0} GGA, ${stats.rmc_count || 0} RMC`;
+    
+    // Update fix type distribution chart
+    updateFixDistribution(stats.fix_types, stats.fix_percentages);
+}
+
+// Update fix type distribution visualization
+function updateFixDistribution(fixTypes, fixPercentages) {
+    const barsContainer = document.getElementById('fix-bars');
+    barsContainer.innerHTML = '';
+    
+    if (!fixTypes || Object.keys(fixTypes).length === 0) {
+        barsContainer.innerHTML = '<p class="loading">No fix type data available</p>';
+        return;
+    }
+    
+    // Define colors for each fix type
+    const fixColors = {
+        'RTK Fixed': '#28a745',
+        'RTK Float': '#17a2b8',
+        'DGPS Fix': '#20c997',
+        'GPS Fix': '#ffc107',
+        'No Fix': '#dc3545',
+        'Estimated': '#fd7e14',
+        'PPS Fix': '#6610f2',
+        'Manual': '#6c757d',
+        'Simulation': '#e83e8c'
+    };
+    
+    // Sort by count (descending)
+    const sortedFixTypes = Object.entries(fixTypes).sort((a, b) => b[1] - a[1]);
+    
+    sortedFixTypes.forEach(([fixType, count]) => {
+        const percentage = fixPercentages ? fixPercentages[fixType] : ((count / Object.values(fixTypes).reduce((a, b) => a + b, 0)) * 100).toFixed(1);
+        const color = fixColors[fixType] || '#6c757d';
+        
+        const barWrapper = document.createElement('div');
+        barWrapper.className = 'fix-bar-wrapper';
+        
+        barWrapper.innerHTML = `
+            <div class="fix-bar-label">
+                <span class="fix-type-name">${fixType}</span>
+                <span class="fix-count">${count} (${percentage}%)</span>
+            </div>
+            <div class="fix-bar-track">
+                <div class="fix-bar-fill" style="width: ${percentage}%; background-color: ${color};"></div>
+            </div>
+        `;
+        
+        barsContainer.appendChild(barWrapper);
+    });
 }
 
 // Plot positions on the map
