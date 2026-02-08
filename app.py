@@ -108,9 +108,9 @@ if __name__ == '__main__':
     debug_mode = os.environ.get('FLASK_ENV', 'development') == 'development'
     
     print("Starting GNSS Data Visualization Server...")
-    print("Navigate to http://localhost:5000")
+    print("Navigate to http://localhost:5006")
     
     if debug_mode:
         print("⚠️  Running in DEBUG mode - DO NOT use in production!")
     
-    app.run(debug=debug_mode, host='0.0.0.0', port=5000)
+    app.run(debug=debug_mode, host='0.0.0.0', port=5006)
