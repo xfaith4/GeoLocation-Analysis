@@ -73,7 +73,7 @@ gunicorn app:app -b 0.0.0.0:5006
 
 ## Project Structure
 
-```
+```diagram
 GeoLocation-Analysis/
 ├── app.py                  # Main Flask application
 ├── gnss_parser.py         # GNSS data parsing utilities
