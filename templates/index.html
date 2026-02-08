@@ -97,6 +97,79 @@
             </div>
         </section>
 
+        <!-- Position Corrections Panel -->
+        <section class="corrections-section">
+            <h2>🎯 Position Corrections & Analysis</h2>
+            <p class="section-description">Apply advanced correction algorithms to improve positioning accuracy by analyzing multiple readings. Corrections help eliminate systematic errors and reduce position scatter.</p>
+            
+            <div class="corrections-container">
+                <!-- Correction Controls -->
+                <div class="correction-controls">
+                    <h3>Correction Settings</h3>
+                    
+                    <div class="control-group">
+                        <label for="correction-method">Correction Method:</label>
+                        <select id="correction-method" class="correction-select">
+                            <option value="mean">Simple Average (Mean)</option>
+                            <option value="median">Median Filter</option>
+                            <option value="weighted_average" selected>Weighted Average (Quality-Based)</option>
+                        </select>
+                        <p class="control-hint">Weighted average considers fix quality, satellite count, and HDOP for best results</p>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label>
+                            <input type="checkbox" id="weight-by-quality" checked>
+                            Weight by Signal Quality
+                        </label>
+                        <p class="control-hint">Prioritize high-quality fixes (RTK) over lower quality positions</p>
+                    </div>
+                    
+                    <button id="calculate-corrections-btn" class="btn btn-primary">Calculate Corrections</button>
+                    <button id="apply-corrections-btn" class="btn btn-secondary" disabled>Apply Corrections to Data</button>
+                </div>
+                
+                <!-- Correction Results -->
+                <div class="correction-results" id="correction-results" style="display: none;">
+                    <h3>Correction Results</h3>
+                    
+                    <div class="correction-stats">
+                        <div class="correction-stat-card">
+                            <div class="correction-stat-label">Corrected Position</div>
+                            <div class="correction-stat-value">
+                                <div id="corrected-lat">-</div>
+                                <div id="corrected-lon">-</div>
+                                <div id="corrected-alt">-</div>
+                            </div>
+                        </div>
+                        
+                        <div class="correction-stat-card">
+                            <div class="correction-stat-label">Mean Correction</div>
+                            <div class="correction-stat-value" id="mean-correction">-</div>
+                            <div class="correction-stat-detail">Average distance adjusted</div>
+                        </div>
+                        
+                        <div class="correction-stat-card">
+                            <div class="correction-stat-label">Max Correction</div>
+                            <div class="correction-stat-value" id="max-correction">-</div>
+                            <div class="correction-stat-detail">Largest individual adjustment</div>
+                        </div>
+                        
+                        <div class="correction-stat-card">
+                            <div class="correction-stat-label">Position Spread</div>
+                            <div class="correction-stat-value" id="spread-before">-</div>
+                            <div class="correction-stat-detail">Data scatter before correction</div>
+                        </div>
+                    </div>
+                    
+                    <div class="correction-explanation">
+                        <h4>How Corrections Work</h4>
+                        <p id="correction-method-explanation">-</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <!-- Map Visualization -->
         <section class="map-section">
             <h2>Position Visualization</h2>
