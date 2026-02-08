@@ -50,6 +50,20 @@ http://localhost:5000
 
 The application will display sample GNSS data. You can upload your own GNSS log files for analysis.
 
+**Production Deployment:**
+
+For production deployment, disable debug mode by setting the environment variable:
+```bash
+export FLASK_ENV=production
+python app.py
+```
+
+Or use a production WSGI server like Gunicorn:
+```bash
+pip install gunicorn
+gunicorn app:app -b 0.0.0.0:5000
+```
+
 ## Project Structure
 
 ```

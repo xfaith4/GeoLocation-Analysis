@@ -102,6 +102,15 @@ def upload_file():
 
 
 if __name__ == '__main__':
+    import os
+    # Debug mode should only be enabled in development
+    # Set FLASK_ENV=production for production deployment
+    debug_mode = os.environ.get('FLASK_ENV', 'development') == 'development'
+    
     print("Starting GNSS Data Visualization Server...")
     print("Navigate to http://localhost:5000")
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    
+    if debug_mode:
+        print("⚠️  Running in DEBUG mode - DO NOT use in production!")
+    
+    app.run(debug=debug_mode, host='0.0.0.0', port=5000)
