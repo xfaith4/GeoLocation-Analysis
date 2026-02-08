@@ -1,11 +1,14 @@
 """
 GNSS Data Parser
 Parses NMEA sentences and extracts positioning information
+Includes position correction algorithms for enhanced accuracy
 """
 
 import pynmea2
 from datetime import datetime
 from typing import List, Dict, Optional
+import statistics
+import math
 
 
 class GNSSParser:
@@ -212,3 +215,156 @@ class GNSSParser:
             stats['signal_quality_percent'] = round((good_fixes / len(gga_data)) * 100, 1) if gga_data else 0
         
         return stats
+    
+    def calculate_position_corrections(self, data: List[Dict], method: str = 'mean', 
+                                      weight_by_quality: bool = True) -> Dict:
+        """
+        Calculate position corrections based on multiple readings
+        
+        Args:
+            data: List of parsed GNSS data
+            method: Correction method ('mean', 'median', 'weighted_average')
+            weight_by_quality: Whether to weight by fix quality and satellite count
+            
+        Returns:
+            Dictionary with correction data and statistics
+        """
+        gga_data = [d for d in data if d.get('sentence_type') == 'GGA' and 
+                    d.get('latitude') and d.get('longitude')]
+        
+        if len(gga_data) < 2:
+            return {
+                'error': 'Insufficient data for corrections (need at least 2 position fixes)',
+                'num_points': len(gga_data)
+            }
+        
+        # Extract positions
+        lats = [d['latitude'] for d in gga_data]
+        lons = [d['longitude'] for d in gga_data]
+        alts = [d.get('altitude', 0) for d in gga_data]
+        
+        # Calculate corrections based on method
+        if method == 'mean':
+            corrected_lat = statistics.mean(lats)
+            corrected_lon = statistics.mean(lons)
+            corrected_alt = statistics.mean(alts) if any(alts) else 0
+            
+        elif method == 'median':
+            corrected_lat = statistics.median(lats)
+            corrected_lon = statistics.median(lons)
+            corrected_alt = statistics.median(alts) if any(alts) else 0
+            
+        elif method == 'weighted_average':
+            # Weight by fix quality and number of satellites
+            weights = []
+            quality_weights = {
+                'RTK Fixed': 10.0,
+                'RTK Float': 5.0,
+                'DGPS Fix': 2.0,
+                'GPS Fix': 1.0,
+                'No Fix': 0.1
+            }
+            
+            for d in gga_data:
+                quality_weight = quality_weights.get(d.get('fix_quality', 'Unknown'), 1.0)
+                # Default to 4 satellites (minimum for 3D positioning) if not available
+                sat_weight = d.get('num_satellites', 4) / 12.0  # Normalize to typical good satellite count (12)
+                hdop = d.get('hdop', 2.0)
+                # Use 0.5 as minimum to prevent division by zero and cap max weight for excellent HDOP
+                hdop_weight = 1.0 / max(hdop, 0.5)  # Lower HDOP is better (inverted for weight)
+                
+                total_weight = quality_weight * sat_weight * hdop_weight if weight_by_quality else 1.0
+                weights.append(total_weight)
+            
+            # Weighted average calculation
+            total_weight = sum(weights)
+            corrected_lat = sum(lat * w for lat, w in zip(lats, weights)) / total_weight
+            corrected_lon = sum(lon * w for lon, w in zip(lons, weights)) / total_weight
+            corrected_alt = sum(alt * w for alt, w in zip(alts, weights)) / total_weight if any(alts) else 0
+        else:
+            return {'error': f'Unknown correction method: {method}'}
+        
+        # Calculate correction statistics
+        lat_corrections = [corrected_lat - lat for lat in lats]
+        lon_corrections = [corrected_lon - lon for lon in lons]
+        alt_corrections = [corrected_alt - alt for alt in alts]
+        
+        # Calculate distances in meters (approximate)
+        correction_distances = []
+        for i in range(len(lats)):
+            dlat = (corrected_lat - lats[i]) * 111000  # degrees to meters
+            dlon = (corrected_lon - lons[i]) * 111000 * math.cos(math.radians(lats[i]))
+            distance = math.sqrt(dlat**2 + dlon**2)
+            correction_distances.append(distance)
+        
+        # Calculate standard deviations before and after
+        lat_std_before = statistics.stdev(lats) if len(lats) > 1 else 0
+        lon_std_before = statistics.stdev(lons) if len(lons) > 1 else 0
+        
+        # Position spread before correction
+        lat_range = max(lats) - min(lats)
+        lon_range = max(lons) - min(lons)
+        spread_before = math.sqrt(lat_range**2 + lon_range**2) * 111000
+        
+        return {
+            'corrected_position': {
+                'latitude': corrected_lat,
+                'longitude': corrected_lon,
+                'altitude': corrected_alt
+            },
+            'original_center': {
+                'latitude': statistics.mean(lats),
+                'longitude': statistics.mean(lons),
+                'altitude': statistics.mean(alts) if any(alts) else 0
+            },
+            'corrections': {
+                'mean_lat_correction': statistics.mean(lat_corrections),
+                'mean_lon_correction': statistics.mean(lon_corrections),
+                'mean_alt_correction': statistics.mean(alt_corrections) if any(alts) else 0,
+                'mean_distance_correction_m': statistics.mean(correction_distances),
+                'max_distance_correction_m': max(correction_distances),
+                'min_distance_correction_m': min(correction_distances)
+            },
+            'accuracy_improvement': {
+                'lat_std_before': lat_std_before,
+                'lon_std_before': lon_std_before,
+                'spread_before_m': spread_before,
+                'num_points': len(gga_data)
+            },
+            'method': method,
+            'weight_by_quality': weight_by_quality
+        }
+    
+    def apply_corrections_to_data(self, data: List[Dict], correction_info: Dict) -> List[Dict]:
+        """
+        Apply calculated corrections to the dataset
+        
+        Args:
+            data: Original parsed GNSS data
+            correction_info: Correction information from calculate_position_corrections
+            
+        Returns:
+            New dataset with corrected positions
+        """
+        if 'error' in correction_info:
+            return data
+        
+        corrected_data = []
+        corrected_pos = correction_info['corrected_position']
+        
+        for d in data:
+            new_d = d.copy()
+            if d.get('sentence_type') == 'GGA' and d.get('latitude') and d.get('longitude'):
+                # For visualization purposes, we keep original but add corrected field
+                new_d['latitude_original'] = d['latitude']
+                new_d['longitude_original'] = d['longitude']
+                new_d['altitude_original'] = d.get('altitude', 0)
+                
+                # Set to corrected values
+                new_d['latitude_corrected'] = corrected_pos['latitude']
+                new_d['longitude_corrected'] = corrected_pos['longitude']
+                new_d['altitude_corrected'] = corrected_pos['altitude']
+                
+            corrected_data.append(new_d)
+        
+        return corrected_data

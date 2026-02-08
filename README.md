@@ -6,6 +6,11 @@ A web application for analyzing and visualizing GNSS (Global Navigation Satellit
 
 - **📊 Enhanced Statistics Dashboard**: 8+ comprehensive metrics including signal quality, position spread, altitude range, and satellite counts
 - **📈 Fix Type Distribution**: Visual breakdown of positioning accuracy with detailed explanations
+- **🌙 Dark Mode**: Toggle between light and dark themes with persistent preference
+- **🎯 Position Corrections**: Advanced correction algorithms to improve positioning accuracy
+  - Simple Average (Mean) correction
+  - Median Filter for outlier resistance
+  - Weighted Average considering fix quality, satellite count, and HDOP
 - **🗺️ Interactive Map**: Visualize position data on an interactive map with color-coded fix quality indicators
 - **🛰️ Live Satellite Tracking**: Track GPS satellites in real-time on the map with position updates
 - **🔍 City Search**: Search for any city worldwide and relocate the map view instantly
@@ -210,6 +215,56 @@ GeoLocation-Analysis/
 │   └── sample_gnss.nmea
 └── README.md            # This file
 ```
+
+## Position Correction Algorithms
+
+The application includes advanced position correction algorithms to improve GNSS positioning accuracy by analyzing multiple readings:
+
+### Correction Methods
+
+1. **Simple Average (Mean)**
+   - Calculates the arithmetic mean of all position readings
+   - Best for datasets with consistent quality and no outliers
+   - Fast and straightforward computation
+   
+2. **Median Filter**
+   - Uses the middle value of sorted positions
+   - Resistant to outliers and extreme measurements
+   - Ideal when data contains anomalous readings
+   
+3. **Weighted Average (Recommended)**
+   - Prioritizes high-quality fixes using multiple factors:
+     - **Fix Quality Weights**: RTK Fixed (10.0) > RTK Float (5.0) > DGPS (2.0) > GPS (1.0)
+     - **Satellite Count**: Normalized to typical good satellite count (12)
+     - **HDOP Weighting**: Lower HDOP values receive higher weight
+   - Provides the most accurate correction for mixed-quality datasets
+   - Automatically adapts to signal quality variations
+
+### How Corrections Work
+
+Position corrections help eliminate systematic errors and reduce position scatter by:
+
+1. **Analyzing Multiple Readings**: Combines data from multiple GNSS fixes
+2. **Weighting by Quality**: Considers fix type, satellite count, and HDOP
+3. **Statistical Processing**: Applies chosen algorithm to calculate optimal position
+4. **Error Reduction**: Reduces random errors and position spread
+
+### Correction Metrics
+
+The system provides detailed correction statistics:
+- **Corrected Position**: Final calculated position (lat, lon, alt)
+- **Mean Correction Distance**: Average adjustment applied
+- **Maximum Correction Distance**: Largest individual adjustment
+- **Position Spread**: Data scatter before correction
+- **Standard Deviations**: Position uncertainty metrics
+
+### Best Practices
+
+- Use **Weighted Average** for mixed-quality datasets (RTK, DGPS, GPS combined)
+- Use **Median Filter** when outliers are present
+- Use **Simple Average** for consistent, high-quality data (all RTK Fixed)
+- Require minimum 2 position fixes for meaningful corrections
+- More data points generally yield better corrections
 
 ## GNSS Data Formats Supported
 

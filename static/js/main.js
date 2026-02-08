@@ -1,5 +1,37 @@
 // GNSS Data Visualization JavaScript
 
+// Dark Mode Management
+function initDarkMode() {
+    const themeToggleBtn = document.getElementById('theme-toggle');
+    const themeIcon = document.getElementById('theme-icon');
+    const themeText = document.getElementById('theme-text');
+    
+    // Check for saved theme preference or default to light mode
+    const currentTheme = localStorage.getItem('theme') || 'light';
+    
+    // Apply the saved theme
+    if (currentTheme === 'dark') {
+        document.body.classList.add('dark-mode');
+        themeIcon.textContent = '☀️';
+        themeText.textContent = 'Light Mode';
+    }
+    
+    // Theme toggle button event listener
+    themeToggleBtn.addEventListener('click', () => {
+        document.body.classList.toggle('dark-mode');
+        
+        if (document.body.classList.contains('dark-mode')) {
+            themeIcon.textContent = '☀️';
+            themeText.textContent = 'Light Mode';
+            localStorage.setItem('theme', 'dark');
+        } else {
+            themeIcon.textContent = '🌙';
+            themeText.textContent = 'Dark Mode';
+            localStorage.setItem('theme', 'light');
+        }
+    });
+}
+
 // Global variables
 let map;
 let markers = [];
@@ -10,6 +42,7 @@ let satelliteUpdateInterval = null;
 
 // Initialize the application
 document.addEventListener('DOMContentLoaded', function() {
+    initDarkMode();
     initializeMap();
     loadData();
     setupEventListeners();
@@ -366,13 +399,9 @@ function setupEventListeners() {
     // File upload
     document.getElementById('upload-btn').addEventListener('click', handleFileUpload);
     
-    // City search
-    document.getElementById('city-search-btn').addEventListener('click', handleCitySearch);
-    document.getElementById('city-search').addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-            handleCitySearch();
-        }
-    });
+    // Correction controls
+    document.getElementById('calculate-corrections-btn').addEventListener('click', calculateCorrections);
+    document.getElementById('apply-corrections-btn').addEventListener('click', applyCorrections);
 }
 
 // Show specific table
@@ -450,143 +479,128 @@ function showStatus(message, type) {
     statusDiv.style.display = 'block';
 }
 
-// Handle city search using Nominatim (OpenStreetMap geocoding)
-async function handleCitySearch() {
-    const cityInput = document.getElementById('city-search');
-    const statusDiv = document.getElementById('city-search-status');
-    const cityName = cityInput.value.trim();
-    
-    if (!cityName) {
-        showCitySearchStatus('Please enter a city name', 'error');
-        return;
-    }
-    
-    if (!map || typeof L === 'undefined') {
-        showCitySearchStatus('Map not available', 'error');
-        return;
-    }
+// Correction Functions
+async function calculateCorrections() {
+    const method = document.getElementById('correction-method').value;
+    const weightByQuality = document.getElementById('weight-by-quality').checked;
     
     try {
-        showCitySearchStatus('Searching for city...', 'success');
-        
-        // Use Nominatim API for geocoding
-        const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(cityName)}&limit=1`, {
+        const response = await fetch('/api/corrections', {
+            method: 'POST',
             headers: {
-                'User-Agent': 'GeoLocation-Analysis-App'
-            }
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                method: method,
+                weight_by_quality: weightByQuality
+            })
         });
         
-        const results = await response.json();
+        const result = await response.json();
         
-        if (results && results.length > 0) {
-            const result = results[0];
-            const lat = parseFloat(result.lat);
-            const lon = parseFloat(result.lon);
-            
-            // Remove previous city marker if exists
-            if (cityMarker) {
-                map.removeLayer(cityMarker);
-            }
-            
-            // Create a new marker for the city
-            cityMarker = L.marker([lat, lon], {
-                icon: L.icon({
-                    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
-                    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
-                    iconSize: [25, 41],
-                    iconAnchor: [12, 41],
-                    popupAnchor: [1, -34],
-                    shadowSize: [41, 41]
-                })
-            }).addTo(map);
-            
-            cityMarker.bindPopup(`<strong>${result.display_name}</strong>`).openPopup();
-            
-            // Pan and zoom to the city
-            map.setView([lat, lon], 13);
-            
-            showCitySearchStatus(`Found: ${result.display_name}`, 'success');
+        if (result.status === 'success') {
+            displayCorrectionResults(result.corrections);
+            document.getElementById('apply-corrections-btn').disabled = false;
         } else {
-            showCitySearchStatus('City not found. Please try a different name.', 'error');
+            alert('Error calculating corrections: ' + result.message);
         }
     } catch (error) {
-        console.error('Error searching for city:', error);
-        showCitySearchStatus('Error searching for city. Please try again.', 'error');
+        alert('Error calculating corrections: ' + error.message);
     }
 }
 
-// Show city search status message
-function showCitySearchStatus(message, type) {
-    const statusDiv = document.getElementById('city-search-status');
-    statusDiv.textContent = message;
-    statusDiv.className = type;
-    statusDiv.style.display = 'block';
+async function applyCorrections() {
+    const method = document.getElementById('correction-method').value;
+    const weightByQuality = document.getElementById('weight-by-quality').checked;
     
-    // Auto-hide success messages after 5 seconds
-    if (type === 'success') {
-        setTimeout(() => {
-            statusDiv.style.display = 'none';
-        }, 5000);
-    }
-}
-
-// Start satellite tracking
-function startSatelliteTracking() {
-    if (!map || typeof L === 'undefined') {
-        console.log('Map not available for satellite tracking');
-        return;
-    }
-    
-    // Initial load
-    loadSatellites();
-    
-    // Update every 10 seconds
-    satelliteUpdateInterval = setInterval(loadSatellites, 10000);
-}
-
-// Load and display satellite positions
-async function loadSatellites() {
     try {
-        const response = await fetch('/api/satellites');
-        const data = await response.json();
+        const response = await fetch('/api/apply_corrections', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                method: method,
+                weight_by_quality: weightByQuality
+            })
+        });
         
-        if (data.status === 'success' && data.satellites) {
-            displaySatellites(data.satellites);
+        const result = await response.json();
+        
+        if (result.status === 'success') {
+            currentData = result.data;
+            updateTables(currentData);
+            updateStatistics(result.stats);
+            
+            // Update map with corrected positions
+            const positions = result.data
+                .filter(d => d.sentence_type === 'GGA' && d.latitude_corrected && d.longitude_corrected)
+                .map(d => ({
+                    lat: d.latitude_corrected,
+                    lon: d.longitude_corrected,
+                    alt: d.altitude_corrected || 0,
+                    fix_quality: d.fix_quality || 'Unknown',
+                    num_satellites: d.num_satellites || 0,
+                    timestamp: d.timestamp || ''
+                }));
+            plotPositions(positions);
+            
+            alert('Corrections applied successfully! Data tables and map updated.');
+        } else {
+            alert('Error applying corrections: ' + result.message);
         }
     } catch (error) {
-        console.error('Error loading satellites:', error);
-        // Silently fail - this is not critical functionality
+        alert('Error applying corrections: ' + error.message);
     }
 }
 
-// Display satellites on the map
-function displaySatellites(satellites) {
-    if (!map || typeof L === 'undefined') {
+function displayCorrectionResults(corrections) {
+    const resultsDiv = document.getElementById('correction-results');
+    resultsDiv.style.display = 'block';
+    
+    if (corrections.error) {
+        resultsDiv.innerHTML = `<div class="error-message">${corrections.error}</div>`;
         return;
     }
     
-    // Clear existing satellite markers
-    satelliteMarkers.forEach(marker => map.removeLayer(marker));
-    satelliteMarkers = [];
+    // Display corrected position
+    const correctedPos = corrections.corrected_position;
+    document.getElementById('corrected-lat').textContent = `Lat: ${correctedPos.latitude.toFixed(6)}°`;
+    document.getElementById('corrected-lon').textContent = `Lon: ${correctedPos.longitude.toFixed(6)}°`;
+    const altitude = correctedPos.altitude || 0;
+    document.getElementById('corrected-alt').textContent = `Alt: ${altitude.toFixed(1)} m`;
     
-    // Add new satellite markers
-    satellites.forEach(sat => {
-        const marker = L.circleMarker([sat.lat, sat.lon], {
-            radius: 8,
-            fillColor: '#ff6b6b',
-            color: '#fff',
-            weight: 2,
-            opacity: 1,
-            fillOpacity: 0.9
-        }).addTo(map);
-        
-        marker.bindPopup(`
-            <strong>${sat.name}</strong><br>
-            Alt: ${sat.altitude.toFixed(0)} km<br>
-            Velocity: ${sat.velocity.toFixed(1)} km/s<br>
-            Visibility: ${sat.visibility || 'N/A'}
-        `);
-        
-        satelliteMarkers.push(marker);
-    });
+    // Display correction statistics
+    const corrStats = corrections.corrections;
+    document.getElementById('mean-correction').textContent = 
+        formatDistance(corrStats.mean_distance_correction_m);
+    document.getElementById('max-correction').textContent = 
+        formatDistance(corrStats.max_distance_correction_m);
+    
+    // Display accuracy improvement
+    const accuracy = corrections.accuracy_improvement;
+    document.getElementById('spread-before').textContent = 
+        formatDistance(accuracy.spread_before_m);
+    
+    // Update explanation based on method
+    const explanations = {
+        'mean': 'Simple Average: Calculates the arithmetic mean of all position readings. Best for datasets with consistent quality and no outliers.',
+        'median': 'Median Filter: Uses the middle value of sorted positions, which is resistant to outliers and extreme measurements.',
+        'weighted_average': 'Weighted Average: Prioritizes high-quality fixes (RTK Fixed > RTK Float > DGPS > GPS) and considers satellite count and HDOP values. Provides the most accurate correction for mixed-quality datasets.'
+    };
+    
+    document.getElementById('correction-method-explanation').textContent = 
+        explanations[corrections.method] || 'Custom correction method applied.';
+}
+
+function formatDistance(meters) {
+    if (meters < 0.01) {
+        return `${(meters * 1000).toFixed(1)} mm`;
+    } else if (meters < 1) {
+        return `${(meters * 100).toFixed(1)} cm`;
+    } else if (meters < 1000) {
+        return `${meters.toFixed(2)} m`;
+    } else {
+        return `${(meters / 1000).toFixed(3)} km`;
+    }
 }

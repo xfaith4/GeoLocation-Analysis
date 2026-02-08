@@ -170,6 +170,64 @@ def upload_file():
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
 
+@app.route('/api/corrections', methods=['POST'])
+def calculate_corrections():
+    """API endpoint to calculate position corrections"""
+    try:
+        data = request.get_json()
+        method = data.get('method', 'mean')
+        weight_by_quality = data.get('weight_by_quality', True)
+        
+        # Use current sample data or uploaded data
+        correction_info = parser.calculate_position_corrections(
+            sample_data, 
+            method=method,
+            weight_by_quality=weight_by_quality
+        )
+        
+        return jsonify({
+            'status': 'success',
+            'corrections': correction_info
+        })
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+
+@app.route('/api/apply_corrections', methods=['POST'])
+def apply_corrections():
+    """API endpoint to apply corrections to data"""
+    try:
+        data = request.get_json()
+        method = data.get('method', 'mean')
+        weight_by_quality = data.get('weight_by_quality', True)
+        
+        # Calculate corrections
+        correction_info = parser.calculate_position_corrections(
+            sample_data,
+            method=method,
+            weight_by_quality=weight_by_quality
+        )
+        
+        if 'error' in correction_info:
+            return jsonify({
+                'status': 'error',
+                'message': correction_info['error']
+            }), 400
+        
+        # Apply corrections
+        corrected_data = parser.apply_corrections_to_data(sample_data, correction_info)
+        corrected_stats = parser.get_summary_statistics(corrected_data)
+        
+        return jsonify({
+            'status': 'success',
+            'data': corrected_data,
+            'stats': corrected_stats,
+            'corrections': correction_info
+        })
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+
 if __name__ == '__main__':
     import os
     # Debug mode should only be enabled in development
